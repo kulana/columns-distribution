@@ -42,7 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="IDistributionStrategy.cs" />
     <Compile Include="Columns.cs" />
+    <Compile Include="TopBottomDistribution.cs" />
+    <Compile Include="LeftRightDistribution.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

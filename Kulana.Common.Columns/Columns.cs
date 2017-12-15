@@ -5,102 +5,73 @@ using System.Linq;
 namespace Kulana.Common.Columns
 {
     /// <summary>
-    /// Divides items equally over the specified number of columns
+    /// Divides items equally over the specified number of columns using a specified strategy
     /// </summary>
     /// <typeparam name="T"></typeparam>
     public class Columns<T>
     {
         public int NumColumns { get; private set; }
-        public IList<Column<T>> Items { get; private set; }
-        public DistributionDirection Direction { get; private set; }
+        private IList<Column<T>> _columns;
 
-        public Columns(int numColumns, IEnumerable<T> items) :
-            this(numColumns, items, DistributionDirection.LEFTRIGHT)
+        public Columns(int numColumns)
         {
-        }
-
-        public Columns(int numColumns, IEnumerable<T> items, DistributionDirection direction)
-        {
-            NumColumns = numColumns;
-            Items = new List<Column<T>>();
-            for (int col = 0; col < NumColumns; col++)
+            if (numColumns <= 0)
             {
-                bool first = !Items.Any();
-                Items.Add(new Column<T>(first));
+                throw new ArgumentException("Number of columns must be greater than 0");
             }
-            Direction = direction;
-            Distribute(items);
+            NumColumns = numColumns;
         }
 
-        private void Distribute(IEnumerable<T> items)
+        private void Initialize()
         {
-            int colIndex = 0;
+            _columns = new List<Column<T>>();
+            Enumerable.Range(1, NumColumns).ToList().ForEach(num => _columns.Add(new Column<T>()));
+        }
+
+        public ICollection<Column<T>> Distribute(ICollection<T> items, IDistributionStrategy strategy)
+        {
+            if (items == null)
+            {
+                throw new ArgumentNullException(nameof(items));
+            }
+            if (strategy == null)
+            {
+                throw new ArgumentNullException(nameof(strategy));
+            }
+            Initialize();
+
+            int itemIndex = 0;
             var @enum = items.GetEnumerator();
             while (@enum.MoveNext())
             {
-                Items[colIndex].Add(@enum.Current);
-                colIndex++;
-                colIndex = colIndex % NumColumns;
+                int columnIndex = strategy.GetColumnIndex(NumColumns, items.Count, itemIndex);
+                _columns[columnIndex].Add(@enum.Current);
+                itemIndex++;
             }
             RemoveEmptyColumns();
+            return _columns;
         }
 
         private void RemoveEmptyColumns()
         {
-            foreach (var column in Items)
+            foreach (var column in _columns)
             {
                 if (!column.Items.Any())
                 {
-                    Items.Remove(column);
+                    _columns.Remove(column);
                 }
             }
-            NumColumns = Items.Count;
+            NumColumns = _columns.Count;
         }
     }
 
     public class Column<T>
     {
-        public IList<T> Items { get; private set; } = new List<T>();
-        public bool IsFirst { get; private set; }
-
-        public Column(bool first)
-        {
-            IsFirst = first;
-        }
+        public ICollection<T> Items { get; private set; } = new List<T>();
 
         public void Add(T item)
         {
             Items.Add(item);
-        }
-    }
-
-    public class DistributionDirection
-    {
-        public static DistributionDirection TOPBOTTOM = new DistributionDirection(TopBottom);
-        public static DistributionDirection LEFTRIGHT = new DistributionDirection(LeftRight);
-        private readonly Func<int, int, int> _strategy;
-
-        private int _columnIndex = 0;
-        private int _itemIndex = 0;
-
-        private DistributionDirection(Func<int, int, int> strategy)
-        {
-            _strategy = strategy;
-        }
-
-        public int NextColumn<T>(int totalColumns, int numItems, int itemIndex)
-        {
-            return _strategy(totalColumns, itemIndex);
-        }
-
-        private static int TopBottom(int totalColumns, int itemIndex)
-        {
-            return 0;
-        }
-
-        private static int LeftRight(int totalColumns, int itemIndex)
-        {
-            return itemIndex % totalColumns;
         }
     }
 }
