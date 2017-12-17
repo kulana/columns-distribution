@@ -10,7 +10,7 @@ namespace Kulana.Common.Columns
     /// <typeparam name="T"></typeparam>
     public class Columns<T>
     {
-        public int NumColumns { get; private set; }
+        public int RequestedColumns { get; private set; }
         private IList<Column<T>> _columns;
 
         public Columns(int numColumns)
@@ -19,16 +19,17 @@ namespace Kulana.Common.Columns
             {
                 throw new ArgumentException("Number of columns must be greater than 0");
             }
-            NumColumns = numColumns;
+            RequestedColumns = numColumns;
+            Initialize();
         }
 
         private void Initialize()
         {
             _columns = new List<Column<T>>();
-            Enumerable.Range(1, NumColumns).ToList().ForEach(num => _columns.Add(new Column<T>()));
+            Enumerable.Range(1, RequestedColumns).ToList().ForEach(num => _columns.Add(new Column<T>()));
         }
 
-        public ICollection<Column<T>> Distribute(ICollection<T> items, IDistributionStrategy strategy)
+        public ICollection<Column<T>> Distribute(ICollection<T> items, IDistributionMethod strategy)
         {
             if (items == null)
             {
@@ -38,13 +39,12 @@ namespace Kulana.Common.Columns
             {
                 throw new ArgumentNullException(nameof(strategy));
             }
-            Initialize();
 
-            int itemIndex = 0;
+            int itemIndex = 1;
             var @enum = items.GetEnumerator();
             while (@enum.MoveNext())
             {
-                int columnIndex = strategy.GetColumnIndex(NumColumns, items.Count, itemIndex);
+                int columnIndex = strategy.GetColumnIndex(RequestedColumns, items.Count, itemIndex);
                 _columns[columnIndex].Add(@enum.Current);
                 itemIndex++;
             }
@@ -61,7 +61,7 @@ namespace Kulana.Common.Columns
                     _columns.Remove(column);
                 }
             }
-            NumColumns = _columns.Count;
+            RequestedColumns = _columns.Count;
         }
     }
 

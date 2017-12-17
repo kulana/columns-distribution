@@ -46,10 +46,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IDistributionStrategy.cs" />
+    <Compile Include="IDistributionMethod.cs" />
     <Compile Include="Columns.cs" />
-    <Compile Include="TopBottomDistribution.cs" />
-    <Compile Include="LeftRightDistribution.cs" />
+    <Compile Include="TopToBottomLeftToRight.cs" />
+    <Compile Include="LeftToRightTopToBottom.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
